@@ -16,6 +16,8 @@
 
 using namespace std;
 
+#define index(i,j) ((i)+height*(j))
+
 struct mouse {
   float x;
   float y;
@@ -72,7 +74,7 @@ void keyboard_f(unsigned char key, int x, int y) {
 
 void mouse_f(int button, int state, int x, int y) {
   mouse.x = x;
-  mouse.y = height - y;
+  mouse.y = height - y; // bottom left is 0,0
 //  cout << "Draw point:" << x << " " << height - y << endl;
   if (button == 0) mouse.left_click = state == GLUT_DOWN;
 }
@@ -90,6 +92,20 @@ void idle_f(void) {
 void draw_f(void) {
   glViewport(0, 0, width, height);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+  glBindTexture(GL_TEXTURE_2D, d0);
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  
+  // Draw with the texture rendered just now
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0f, 1.0f); glVertex4f(-1.0f, 1.0f, .0f, 1.0f);    // top left
+  glTexCoord2f(0.0f, 0.0f); glVertex4f(-1.0f, -1.0f, 0.0f, 1.0f);     // bottom left
+  glTexCoord2f(1.0f, 0.0f); glVertex4f(1.0f, -1.0f, 0.0f, 1.0f);    // bottom right
+  glTexCoord2f(1.0f, 1.0f); glVertex4f(1.0f, 1.0f, 0.0f, 1.0f);   // top right
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  
   glutSwapBuffers();
 }
 
@@ -101,9 +117,20 @@ void draw_f(void) {
 
 void init_textures() {
   // Create density textures
+  
+  GLubyte* data = (GLubyte *) malloc(width*height*3*sizeof(GLubyte));
+  int i = width/2;
+  data[index(i-1,i-1)*3] = 255;
+  data[index(i-1,i-1)*3+1] = 255;
+  data[index(i-1,i-1)*3+2] = 255;
+  
+  data[index(i,i)*3] = 255;
+  data[index(i,i)*3+1] = 255;
+  data[index(i,i)*3+2] = 255;
+  
   glGenTextures(1, &d0);
   glBindTexture(GL_TEXTURE_2D, d0);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   

@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		7D8F56C41AD579FF00951238 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7D8F56C31AD579FF00951238 /* main.cpp */; };
+		7D8F56CB1AD57A1800951238 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D8F56CA1AD57A1800951238 /* OpenGL.framework */; };
+		7D8F56CD1AD57A1C00951238 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D8F56CC1AD57A1C00951238 /* GLUT.framework */; };
+		7D8F56D51AD57A7000951238 /* bmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7D8F56CF1AD57A7000951238 /* bmp.cpp */; };
+		7D8F56D61AD57A7000951238 /* shaderfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7D8F56D11AD57A7000951238 /* shaderfile.cpp */; };
+		7D8F56D71AD57A7000951238 /* textfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7D8F56D31AD57A7000951238 /* textfile.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +30,14 @@
 /* Begin PBXFileReference section */
 		7D8F56C01AD579FF00951238 /* fluid_simulation */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fluid_simulation; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D8F56C31AD579FF00951238 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		7D8F56CA1AD57A1800951238 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		7D8F56CC1AD57A1C00951238 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		7D8F56CF1AD57A7000951238 /* bmp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bmp.cpp; sourceTree = "<group>"; };
+		7D8F56D01AD57A7000951238 /* bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bmp.h; sourceTree = "<group>"; };
+		7D8F56D11AD57A7000951238 /* shaderfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shaderfile.cpp; sourceTree = "<group>"; };
+		7D8F56D21AD57A7000951238 /* shaderfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shaderfile.h; sourceTree = "<group>"; };
+		7D8F56D31AD57A7000951238 /* textfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = textfile.cpp; sourceTree = "<group>"; };
+		7D8F56D41AD57A7000951238 /* textfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textfile.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +45,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7D8F56CD1AD57A1C00951238 /* GLUT.framework in Frameworks */,
+				7D8F56CB1AD57A1800951238 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +56,8 @@
 		7D8F56B71AD579FF00951238 = {
 			isa = PBXGroup;
 			children = (
+				7D8F56CC1AD57A1C00951238 /* GLUT.framework */,
+				7D8F56CA1AD57A1800951238 /* OpenGL.framework */,
 				7D8F56C21AD579FF00951238 /* fluid_simulation */,
 				7D8F56C11AD579FF00951238 /* Products */,
 			);
@@ -57,9 +74,23 @@
 		7D8F56C21AD579FF00951238 /* fluid_simulation */ = {
 			isa = PBXGroup;
 			children = (
+				7D8F56CE1AD57A4B00951238 /* utilities */,
 				7D8F56C31AD579FF00951238 /* main.cpp */,
 			);
 			path = fluid_simulation;
+			sourceTree = "<group>";
+		};
+		7D8F56CE1AD57A4B00951238 /* utilities */ = {
+			isa = PBXGroup;
+			children = (
+				7D8F56CF1AD57A7000951238 /* bmp.cpp */,
+				7D8F56D01AD57A7000951238 /* bmp.h */,
+				7D8F56D11AD57A7000951238 /* shaderfile.cpp */,
+				7D8F56D21AD57A7000951238 /* shaderfile.h */,
+				7D8F56D31AD57A7000951238 /* textfile.cpp */,
+				7D8F56D41AD57A7000951238 /* textfile.h */,
+			);
+			name = utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -119,6 +150,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7D8F56C41AD579FF00951238 /* main.cpp in Sources */,
+				7D8F56D51AD57A7000951238 /* bmp.cpp in Sources */,
+				7D8F56D71AD57A7000951238 /* textfile.cpp in Sources */,
+				7D8F56D61AD57A7000951238 /* shaderfile.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

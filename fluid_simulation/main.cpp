@@ -36,7 +36,9 @@ bool left_mouse_down;
 mouse mouse;
 vector<vec2> points = {};
 GLuint d0, d, d_fbo_A, d_fbo_B;
+GLuint diffuse_shader;
 
+GLuint vao;
 
 void update_with_input() {
   vec2 point;
@@ -89,54 +91,52 @@ void idle_f(void) {
   glutPostRedisplay();
 }
 
-void draw_f(void) {
-  glViewport(0, 0, width, height);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
+void draw_texture() {
+  glUseProgram(diffuse_shader);
+  glUniform1i(glGetUniformLocation(diffuse_shader, "Texture"),0);
+
   glBindTexture(GL_TEXTURE_2D, d0);
   glEnable(GL_TEXTURE_2D);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   
-  // Draw with the texture rendered just now
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0f, 1.0f); glVertex4f(-1.0f, 1.0f, .0f, 1.0f);    // top left
-  glTexCoord2f(0.0f, 0.0f); glVertex4f(-1.0f, -1.0f, 0.0f, 1.0f);     // bottom left
-  glTexCoord2f(1.0f, 0.0f); glVertex4f(1.0f, -1.0f, 0.0f, 1.0f);    // bottom right
-  glTexCoord2f(1.0f, 1.0f); glVertex4f(1.0f, 1.0f, 0.0f, 1.0f);   // top right
-  glEnd();
+  glBindVertexArrayAPPLE(vao);
+  glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
   glDisable(GL_TEXTURE_2D);
+}
+
+
+void draw_f(void) {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+  draw_texture();
   
   glutSwapBuffers();
 }
 
 /*
  ----------------------------------------------------------------------
- Texture & Framebuffer initiation
+ Texture / Framebuffer / Shader initiation
  ----------------------------------------------------------------------
  */
 
 void init_textures() {
   // Create density textures
   
-  GLubyte* data = (GLubyte *) malloc(width*height*3*sizeof(GLubyte));
+  GLubyte* data = (GLubyte *) malloc(width*height*sizeof(GLubyte));
   int i = width/2;
-  data[index(i-1,i-1)*3] = 255;
-  data[index(i-1,i-1)*3+1] = 255;
-  data[index(i-1,i-1)*3+2] = 255;
-  
-  data[index(i,i)*3] = 255;
-  data[index(i,i)*3+1] = 255;
-  data[index(i,i)*3+2] = 255;
+  data[index(i-1,i-1)] = 255;
+  data[index(i,i)] = 255;
+  data[index(i-3,i-3)] = 255;
   
   glGenTextures(1, &d0);
   glBindTexture(GL_TEXTURE_2D, d0);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
   glGenTextures(1, &d);
   glBindTexture(GL_TEXTURE_2D, d);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
@@ -156,6 +156,50 @@ void init_framebuffer() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void init_shaders() {
+  diffuse_shader = loadProgram("shaders/basic.vert", "shaders/diffuse.frag");
+}
+
+/*
+ ----------------------------------------------------------------------
+ Vertex Array Objects
+ ----------------------------------------------------------------------
+ */
+
+void init_vao() {
+  float vertex[] = { -1.0f, 1.0f, .0f, -1.0f, -1.0f, 0.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 0.0f };
+  float texture[] = { 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
+  unsigned int index[] = { 0, 1, 2, 3 };
+  glGenVertexArraysAPPLE(1, &vao);
+  glBindVertexArrayAPPLE(vao);
+  
+  GLuint buffer;
+  glGenBuffers(1, &buffer);
+  
+  GLuint vertexLoc = glGetAttribLocation(diffuse_shader,"position");
+  glBindBuffer(GL_ARRAY_BUFFER, buffer);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(vertexLoc );
+  glVertexAttribPointer(vertexLoc , 3, GL_FLOAT, 0, 0, 0);
+  
+  GLuint tex_buffer;
+  glGenBuffers(1, &tex_buffer);
+  GLuint texLoc = glGetAttribLocation(diffuse_shader,"tex");
+  glBindBuffer(GL_ARRAY_BUFFER, tex_buffer);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(texture), texture, GL_STATIC_DRAW);
+  glEnableVertexAttribArray( texLoc );
+  glVertexAttribPointer(texLoc , 2, GL_FLOAT, 0, 0, 0);
+  
+  GLuint index_buffer;
+  glGenBuffers(1, &index_buffer);
+  
+  // bind buffer for positions and copy data into buffer
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index), index, GL_STATIC_DRAW);
+
+  glBindVertexArrayAPPLE(0);
+}
+
 /*
  ----------------------------------------------------------------------
  GLUT initiation
@@ -168,8 +212,8 @@ void init_glut() {
   glutInitWindowSize( width, height );
   glutCreateWindow("Fluid simulation");
   init_textures();
-//  initShaders();
-//  initRendering();
+  init_shaders();
+  init_vao();
   glutReshapeFunc(reshape_f);
   glutKeyboardFunc(keyboard_f);
   glutMouseFunc(mouse_f);

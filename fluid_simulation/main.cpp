@@ -152,7 +152,7 @@ void draw_f(void) {
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   swap_texture();
-//  for (int i = 0; i<20; i++)
+  for (int i = 0; i<20; i++)
   update_diffuse();
   draw_texture();
   

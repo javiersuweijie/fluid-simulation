@@ -1,5 +1,0 @@
-dependencies: \
-  /Users/weijiejaviersu/Documents/gv-50017/fluid_simulation/fluid_simulation/main.cpp \
-  /Users/weijiejaviersu/Documents/gv-50017/fluid_simulation/fluid_simulation/bmp.h \
-  /Users/weijiejaviersu/Documents/gv-50017/fluid_simulation/fluid_simulation/shaderfile.h \
-  /Users/weijiejaviersu/Documents/gv-50017/fluid_simulation/fluid_simulation/textfile.h

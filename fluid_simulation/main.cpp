@@ -35,7 +35,7 @@ int width = 512, height = 512;
 bool left_mouse_down;
 mouse mouse;
 vector<vec2> points = {};
-GLuint d0, d, d_fbo_A, d_fbo_B;
+GLuint dd, d0, d, d_fbo_d, d_fbo_d0, d_fbo_dd;
 GLuint diffuse_shader, display_shader;
 
 GLuint vao;
@@ -97,13 +97,13 @@ void update_diffuse() {
   glUniform1i(glGetUniformLocation(diffuse_shader, "Texture1"),1);
   glUniform1f(glGetUniformLocation(diffuse_shader, "pixelSize"), 1.0/width);
   
-  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_A);
-  glViewport(0, 0, width, height);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
-  glEnable(GL_TEXTURE_2D);
+  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_dd);
+  glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+  glViewport(0,0, 512, 512);
+//  glEnable(GL_TEXTURE_2D);
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, d0);
+  glBindTexture(GL_TEXTURE_2D, d);
+  
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, d);
   
@@ -111,32 +111,52 @@ void update_diffuse() {
   
   glBindVertexArrayAPPLE(vao);
   glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
-  glDisable(GL_TEXTURE_2D);
-}
-
-void swap_texture() {
-  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_A);
-  glUseProgram(display_shader);
-  glUniform1i(glGetUniformLocation(display_shader, "Texture0") ,0);
   
-  glEnable(GL_TEXTURE_2D);
+  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_d);
+  glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+  glViewport(0,0, 512, 512);
+  //  glEnable(GL_TEXTURE_2D);
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, d0);
+  glBindTexture(GL_TEXTURE_2D, dd);
+  
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, dd);
   
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   
   glBindVertexArrayAPPLE(vao);
   glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
-  glDisable(GL_TEXTURE_2D);
+
+}
+
+void swap_texture(GLuint framebuffer, GLuint texture) {
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+  glViewport(0,0, 512, 512);
+  
+  glUseProgram(display_shader);
+  glUniform1i(glGetUniformLocation(display_shader, "Texture0") ,0);
+  
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  
+  glBindVertexArrayAPPLE(vao);
+  glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
+
 }
 
 void draw_texture() {
   
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+  glViewport(0,0, 512, 512);
+  
   glUseProgram(display_shader);
   glUniform1i(glGetUniformLocation(display_shader, "Texture0") ,0);
   
-  glEnable(GL_TEXTURE_2D);
+//  glEnable(GL_TEXTURE_2D);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, d);
 
@@ -144,16 +164,22 @@ void draw_texture() {
   
   glBindVertexArrayAPPLE(vao);
   glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
-  glDisable(GL_TEXTURE_2D);
-}
+//  glDisable(GL_TEXTURE_2D);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
+}
 
 void draw_f(void) {
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  swap_texture();
-  for (int i = 0; i<20; i++)
-  update_diffuse();
+  
+  swap_texture(d_fbo_d,d0);
+  for (int i = 0; i<1; i++) {
+    update_diffuse();
+  }
+
+  swap_texture(d_fbo_d0,d);
   draw_texture();
   
   glutSwapBuffers();
@@ -170,26 +196,30 @@ void init_textures() {
   
   GLubyte* data = (GLubyte *) malloc(width*height*sizeof(GLubyte));
   int i = width/2;
-  for (int k=0;k<5;k++) {
-    data[index(i-k,i-k)] = 255;
+  for (int k=0;k<50;k++) {
     data[index(i-k,i)] = 255;
     data[index(i,i-k)] = 255;
     data[index(i,i)] = 255;
-    data[index(i+k,i+k)] = 255;
     data[index(i+k,i)] = 255;
     data[index(i,i+k)] = 255;
   }
-  
+//  data[index(i,i)] = 255;
   glGenTextures(1, &d0);
   glBindTexture(GL_TEXTURE_2D, d0);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, data);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
   GLubyte* empty = (GLubyte *) malloc(width*height*sizeof(GLubyte));
   glGenTextures(1, &d);
   glBindTexture(GL_TEXTURE_2D, d);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, empty);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, empty);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  
+  glGenTextures(1, &dd);
+  glBindTexture(GL_TEXTURE_2D, dd);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, empty);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
@@ -197,14 +227,17 @@ void init_textures() {
 
 void init_framebuffer() {
   // Create density framebuffers;
-  glGenFramebuffers(1, &d_fbo_A);
-  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_A);
+  glGenFramebuffers(1, &d_fbo_d);
+  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_d);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d, 0);
   
-  glGenFramebuffers(1, &d_fbo_B);
-  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_B);
+  glGenFramebuffers(1, &d_fbo_d0);
+  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_d0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d0, 0);
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) exit(0);
+  
+  glGenFramebuffers(1, &d_fbo_dd);
+  glBindFramebuffer(GL_FRAMEBUFFER, d_fbo_dd);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dd, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

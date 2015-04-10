@@ -1,4 +1,5 @@
 *.swp
+*.xcactivitylog
 DerivedData/fluid_simulation/Logs/*
 DerivedData/fluid_simulation/Build/Intermediates/*
 *.plist

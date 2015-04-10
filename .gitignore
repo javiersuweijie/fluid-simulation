@@ -1,3 +1,8 @@
 *.swp
-
 *.xcactivitylog
+DerivedData/fluid_simulation/Logs/*
+DerivedData/fluid_simulation/Build/Intermediates/*
+*.plist
+*.db
+*.idx
+DerivedData/fluid_simulation/Index/Debug/macosx10.10-x86_64/*

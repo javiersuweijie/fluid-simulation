@@ -21,7 +21,7 @@ vec4 bilinear_mix(sampler2D texture, vec2 st, float gridSize)
 #define texUV(s,t) vec2(UV.x+(s),UV.y+(t))
 
 void main() {
-  vec2 pos = UV - timestep * (texture2D(Texture1, UV).xy - 0.5);
+  vec2 pos = UV - timestep * (texture2D(Texture1, UV).xy);
   gl_FragColor = bilinear_mix(Texture0, pos, pixelSize);
 
 }

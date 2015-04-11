@@ -325,7 +325,7 @@ void init_textures() {
   
   data2d = (GLfloat *) malloc(texture_size*texture_size*2*sizeof(GLfloat));
   for (int k=0; k<texture_size*texture_size*2; k++) {
-    data2d[k] = 0.5;
+    data2d[k] = 0.0;
   }
   glGenTextures(1, &v0);
   glBindTexture(GL_TEXTURE_2D, v0);

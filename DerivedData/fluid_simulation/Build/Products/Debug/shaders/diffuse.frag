@@ -22,7 +22,7 @@ void main(){
   /*vec4 d2 = texture2D(Texture0, vec2(UV.x-pixelSize, UV.y));*/
   /*vec4 d3 = texture2D(Texture0, vec2(UV.x, UV.y+pixelSize));*/
   /*vec4 d4 = texture2D(Texture0, vec2(UV.x, UV.y-pixelSize));*/
-  /*float a = pixelSize*pixelSize/0.00001;*/
+  /*float a = pixelSize*pixelSize/0.001;*/
   /*vec4 d = (d1+d2+d3+d4+a*d0)/(4.0+a);*/
   /*vec4 d = (d1+d2+d3+d4)/4.0 - d0/4.0;*/
   /*gl_FragColor = vec4(d);*/

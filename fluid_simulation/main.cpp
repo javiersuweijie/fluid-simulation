@@ -31,31 +31,31 @@ struct vec2 {
   int x,y;
 };
 
-int texture_size = 128;
+int texture_size = 512;
 int width = 768, height = 768;
 int movement = 0;
 mouse mouse;
 
 GLuint dd, d0, d, fbo_d, fbo_d0, fbo_dd;
 GLuint vv, v0, v, fbo_v, fbo_v0, fbo_vv;
-GLuint diffuse_shader, display_shader, add_shader, advect_shader;
+GLuint diffuse_shader, display_shader, add_shader, advect_shader, project1_shader, project2_shader;
 
 GLuint vao;
 
-GLubyte* empty, *data, *data2d;
+GLfloat* empty, *data, *data2d;
 
 
 void move_array(int x, int y) {
   
   for (int i=0; i<texture_size; i++) {
     for (int j=0; j<texture_size; j++) {
-      data[index(i,j)] = 0;
+      data[index(i,j)] = 0.0;
     }
   }
   
   for (int k=0;k<20;k++) {
     for (int j=0;j<20;j++) {
-      data[index(x-10+k,y-10+j)] = 255;
+      data[index(x-10+k,y-10+j)] = 10.0;
     }
   }
 }
@@ -116,6 +116,12 @@ void idle_f(void) {
   glutPostRedisplay();
 }
 
+void clear_texture(GLuint texture) {
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo_d);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
 void linear_solver(GLuint x0, GLuint x, GLuint xx, float a, float c, GLuint buffer, GLuint save_to) {
   glUseProgram(diffuse_shader);
   glUniform1i(glGetUniformLocation(diffuse_shader, "Texture0"),0);
@@ -154,9 +160,9 @@ void linear_solver(GLuint x0, GLuint x, GLuint xx, float a, float c, GLuint buff
   }
 }
 
-void update_diffuse() {
+void diffuse() {
   
-  float a = texture_size * texture_size * 0.000017;
+  float a = texture_size * texture_size * 0.000004;
   float c = 1+(4.0*a);
   linear_solver(d0, d, dd, a, c, fbo_dd, fbo_d);
 
@@ -181,7 +187,7 @@ void swap_texture(GLuint framebuffer, GLuint texture) {
 
 void add_source() {
   glBindTexture(GL_TEXTURE_2D, d0);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_size, texture_size, GL_RED, GL_UNSIGNED_BYTE, data);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_size, texture_size, GL_RED, GL_FLOAT, data);
   
   glUseProgram(add_shader);
   glUniform1i(glGetUniformLocation(add_shader, "Texture0"),0);
@@ -221,7 +227,6 @@ void draw_texture(GLuint texture) {
   glBindVertexArrayAPPLE(vao);
   glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
   
-  glutSwapBuffers();
 }
 
 void advect(GLuint density, GLuint velocity, GLuint save_to) {
@@ -240,10 +245,30 @@ void advect(GLuint density, GLuint velocity, GLuint save_to) {
   glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
 }
 
-void clear_texture(GLuint texture) {
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_d);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  glClear(GL_COLOR_BUFFER_BIT);
+void project(GLuint v0, GLuint v, GLuint vv, GLuint p, GLuint div, GLuint buffer, GLuint save_to, GLuint fbo_div, GLuint fbo_p) {
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo_div);
+  glUseProgram(project1_shader);
+  glUniform1i(glGetUniformLocation(project1_shader, "Texture0"),0);
+  glUniform1f(glGetUniformLocation(advect_shader, "pixelSize"), 1.0/texture_size);
+  glViewport(0, 0, texture_size, texture_size);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, v0);
+  glBindVertexArrayAPPLE(vao);
+  glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, NULL);
+  
+  clear_texture(p);
+  linear_solver(div, p, vv, 1.0, 4.0, buffer, fbo_p);
+  
+  draw_texture(p);
+  GLbyte sum[1];
+  GLbyte pixel2[1];
+  GLbyte pixel3[1];
+  for (int i=0; i<texture_size; ++i) {
+    for (int j=0; j<texture_size; ++j) {
+//      glReadPixels(i, j, 1, 1, GL_RG, GL_UNSIGNED_BYTE, pixel1);
+//      glTexSubImage2D(GL_TEXTURE_2D, 0, i, j, 1, 1, GL_RG, GL_UNSIGNED_BYTE, <#const GLvoid *pixels#>)
+    }
+  }
 }
 
 void draw_f(void) {
@@ -253,14 +278,13 @@ void draw_f(void) {
     swap_texture(fbo_d0,dd);
   }
   clear_texture(d);
-  clear_texture(dd);
   
-  update_diffuse();
-
+  diffuse();
   advect(d, v0, fbo_d0);
 //  swap_texture(fbo_d0,d);
   
   draw_texture(d0);
+  glutSwapBuffers();
 }
 
 /*
@@ -272,52 +296,52 @@ void draw_f(void) {
 void init_textures() {
   // Create density textures
   
-  data = (GLubyte *) malloc(texture_size*texture_size*sizeof(GLubyte));
+  data = (GLfloat *) malloc(texture_size*texture_size*sizeof(GLfloat));
   int i = texture_size/2;
   for (int k=0;k<20;k++) {
     for (int j=0;j<20;j++) {
-      data[index(i+k+movement,i+j)] = 255;
+      data[index(i+k+movement,i+j)] = 10.0;
     }
   }
 
   glGenTextures(1, &d0);
   glBindTexture(GL_TEXTURE_2D, d0);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, texture_size, texture_size, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, texture_size, texture_size, 0, GL_RED, GL_FLOAT, data);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
-  empty = (GLubyte *) malloc(texture_size*texture_size*sizeof(GLubyte));
+  empty = (GLfloat *) malloc(texture_size*texture_size*sizeof(GLfloat));
   glGenTextures(1, &d);
   glBindTexture(GL_TEXTURE_2D, d);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, texture_size, texture_size, 0, GL_RED, GL_UNSIGNED_BYTE, empty);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_R32F, texture_size, texture_size, 0, GL_RED, GL_FLOAT, empty);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
   glGenTextures(1, &dd);
   glBindTexture(GL_TEXTURE_2D, dd);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, texture_size, texture_size, 0, GL_RED, GL_UNSIGNED_BYTE, empty);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_R32F, texture_size, texture_size, 0, GL_RED, GL_FLOAT, empty);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
-  data2d = (GLubyte *) malloc(texture_size*texture_size*2*sizeof(GLubyte));
+  data2d = (GLfloat *) malloc(texture_size*texture_size*2*sizeof(GLfloat));
   for (int k=0; k<texture_size*texture_size*2; k++) {
-    data2d[k] = 127;
+    data2d[k] = 0.5;
   }
   glGenTextures(1, &v0);
   glBindTexture(GL_TEXTURE_2D, v0);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RG, texture_size, texture_size, 0, GL_RG, GL_UNSIGNED_BYTE, data2d);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RG16F, texture_size, texture_size, 0, GL_RG, GL_FLOAT, data2d);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &v);
   glBindTexture(GL_TEXTURE_2D, v);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RG, texture_size, texture_size, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RG16F, texture_size, texture_size, 0, GL_RED, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
   glGenTextures(1, &vv);
   glBindTexture(GL_TEXTURE_2D, vv);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RG, texture_size, texture_size, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RG16F, texture_size, texture_size, 0, GL_RED, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   
@@ -353,10 +377,11 @@ void init_framebuffer() {
 }
 
 void init_shaders() {
-  diffuse_shader = loadProgram("shaders/basic.vert", "shaders/diffuse.frag");
-  display_shader = loadProgram("shaders/basic.vert", "shaders/basic.frag");
-  add_shader     = loadProgram("shaders/basic.vert", "shaders/add.frag");
-  advect_shader  = loadProgram("shaders/basic.vert", "shaders/advect.frag");
+  diffuse_shader  = loadProgram("shaders/basic.vert", "shaders/diffuse.frag");
+  display_shader  = loadProgram("shaders/basic.vert", "shaders/basic.frag");
+  add_shader      = loadProgram("shaders/basic.vert", "shaders/add.frag");
+  advect_shader   = loadProgram("shaders/basic.vert", "shaders/advect.frag");
+  project1_shader = loadProgram("shaders/basic.vert", "shaders/project1.frag");
 }
 
 /*
